@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Blood Bank Finder</title>
+  <style>
+    body { font-family: Arial; max-width: 700px; margin: 30px auto; padding: 0 15px; }
+    h1 { color: #b71c1c; }
+    .box { border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
+    input, select, button { padding: 8px; margin: 4px; }
+    button { background: #b71c1c; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    .low { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>🩸 Blood Bank Finder</h1>
+
+  <!-- Section 1: patients search for blood -->
+  <div class="box">
+    <h3>Find Blood</h3>
+    <input id="city" placeholder="City" value="Hyderabad">
+    <select id="group"></select>
+    <button onclick="search()">Search</button>
+    <div id="results"></div>
+  </div>
+
+  <!-- Section 2: blood banks update their stock -->
+  <div class="box">
+    <h3>Update Stock (for Blood Banks)</h3>
+    <input id="bank" placeholder="Bank name">
+    <input id="bcity" placeholder="City">
+    <select id="bgroup"></select>
+    <input id="units" type="number" placeholder="Units" min="0">
+    <button onclick="updateStock()">Save</button>
+    <p id="msg"></p>
+  </div>
+
+<script>
+  const GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
+  // Fill both dropdowns with blood groups
+  for (const id of ["group", "bgroup"]) {
+    document.getElementById(id).innerHTML = GROUPS.map(g => `<option>${g}</option>`).join("");
+  }
+
+  // Call GET /api/search and show the results as a table
+  async function search() {
+    const city = document.getElementById("city").value;
+    const group = document.getElementById("group").value;
+    // encodeURIComponent is needed because "+" in a URL means space
+    const res = await fetch(`/api/search?city=${encodeURIComponent(city)}&group=${encodeURIComponent(group)}`);
+    const data = await res.json();
+
+    if (data.length === 0) {
+      document.getElementById("results").innerHTML = "<p>No compatible blood found.</p>";
+      return;
+    }
+    let html = "<table><tr><th>Bank</th><th>Group</th><th>Units</th></tr>";
+    for (const s of data) {
+      html += `<tr><td>${s.bank}</td><td>${s.group}</td>
+               <td class="${s.low ? 'low' : ''}">${s.units}${s.low ? ' (Low)' : ''}</td></tr>`;
+    }
+    document.getElementById("results").innerHTML = html + "</table>";
+  }
+
+  // Send POST /api/stock with the form data as JSON
+  async function updateStock() {
+    const body = {
+      bank:  document.getElementById("bank").value,
+      city:  document.getElementById("bcity").value,
+      group: document.getElementById("bgroup").value,
+      units: Number(document.getElementById("units").value)
+    };
+    const res = await fetch("/api/stock", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    document.getElementById("msg").innerText = res.ok ? "Saved ✅" : "Error: " + data.error;
+  }
+</script>
+</body>
+</html>
