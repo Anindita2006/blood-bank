@@ -6,6 +6,12 @@ pipeline {
         maven 'maven'
     }
 
+    environment {
+        PATH = "C:\\Program Files\\Docker\\Docker\\resources\\bin;${env.PATH}"
+        DOCKER_HOST = 'tcp://localhost:2375'
+        KUBECONFIG = 'C:\\Users\\anind\\.kube\\config'
+    }
+
     stages {
         stage('Checkout') {
             steps { checkout scm }                 // pull latest code from GitHub
