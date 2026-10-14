@@ -2,6 +2,9 @@
 // (On Windows Jenkins, replace every `sh` with `bat`.)
 pipeline {
     agent any
+    tools {
+        maven 'maven'
+    }
 
     stages {
         stage('Checkout') {
